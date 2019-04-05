@@ -1,0 +1,524 @@
+{
+  "EDITOR_STATE": {
+    "allProjectFiles": {
+      "7bcaec12-c805-4fe1-8d83-93d757baf9e9": {
+        "id": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+        "parent": null,
+        "name": "serverless-rest-api-with-dynamodb",
+        "type": "DIRECTORY",
+        "isDirectory": true,
+        "children": [
+          "5debff04-9510-440d-a445-e34a6c264a35",
+          "5452a26d-da82-4b8e-8965-1a728e4037cf",
+          "299338ae-42e5-4ff1-bfb7-42b023f5c5aa",
+          "f5fa261f-32b2-45af-b3a2-7524de34cf75",
+          "2ec1a812-f1a1-465e-aabe-26df73739c67",
+          "3f54d3f0-7330-4f20-abd3-54c4f092a3ad",
+          "749cf815-a11e-4fd6-a978-59c662893dfb"
+        ],
+        "isRemovable": false,
+        "filePath": "serverless-rest-api-with-dynamodb"
+      },
+      "5debff04-9510-440d-a445-e34a6c264a35": {
+        "id": "5debff04-9510-440d-a445-e34a6c264a35",
+        "parent": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+        "name": "todos/create.js",
+        "type": "JS_LAMBDA",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/todos/create.js",
+        "code": "'use strict';\n\nconst uuid = require('uuid');\nconst dynamodb = require('./dynamodb');\n\nmodule.exports.create = (event, context, callback) => {\n  const timestamp = new Date().getTime();\n  const data = JSON.parse(event.body);\n  if (typeof data.text !== 'string') {\n    console.error('Validation Failed');\n    callback(null, {\n      statusCode: 400,\n      headers: { 'Content-Type': 'text/plain' },\n      body: 'Couldn\\'t create the todo item.',\n    });\n    return;\n  }\n\n  const params = {\n    TableName: process.env.DYNAMODB_TABLE,\n    Item: {\n      id: uuid.v1(),\n      text: data.text,\n      checked: false,\n      createdAt: timestamp,\n      updatedAt: timestamp,\n    },\n  };\n\n  // write the todo to the database\n  dynamodb.put(params, (error) => {\n    // handle potential errors\n    if (error) {\n      console.error(error);\n      callback(null, {\n        statusCode: error.statusCode || 501,\n        headers: { 'Content-Type': 'text/plain' },\n        body: 'Couldn\\'t create the todo item.',\n      });\n      return;\n    }\n\n    // create a response\n    const response = {\n      statusCode: 200,\n      body: JSON.stringify(params.Item),\n    };\n    callback(null, response);\n  });\n};\n",
+        "config": {
+          "runtime": "nodejs8.10",
+          "handler": "create",
+          "timeout": 60,
+          "memory": 128,
+          "layers": []
+        },
+        "triggers": [
+          {
+            "resourceName": "apigusEast1createtodospost",
+            "config": {}
+          }
+        ],
+        "customSecurityPolicy": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem"
+              ],
+              "Resource": "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            }
+          ]
+        },
+        "testCases": {
+          "bd4effeb-6c3c-4fae-819d-9a8d11537edf": {
+            "id": "bd4effeb-6c3c-4fae-819d-9a8d11537edf",
+            "name": "Unnamed event",
+            "functionId": "5debff04-9510-440d-a445-e34a6c264a35",
+            "event": "{\n    \"key1\": \"value1\",\n    \"key2\": \"value2\",\n    \"key3\": \"value3\"\n}"
+          }
+        }
+      },
+      "5452a26d-da82-4b8e-8965-1a728e4037cf": {
+        "id": "5452a26d-da82-4b8e-8965-1a728e4037cf",
+        "parent": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+        "name": "todos/list.js",
+        "type": "JS_LAMBDA",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/todos/list.js",
+        "code": "'use strict';\n\nconst dynamodb = require('./dynamodb');\n\nmodule.exports.list = (event, context, callback) => {\n  const params = {\n    TableName: process.env.DYNAMODB_TABLE,\n  };\n\n  // fetch all todos from the database\n  dynamodb.scan(params, (error, result) => {\n    // handle potential errors\n    if (error) {\n      console.error(error);\n      callback(null, {\n        statusCode: error.statusCode || 501,\n        headers: { 'Content-Type': 'text/plain' },\n        body: 'Couldn\\'t fetch the todo item.',\n      });\n      return;\n    }\n\n    // create a response\n    const response = {\n      statusCode: 200,\n      body: JSON.stringify(result.Items),\n    };\n    callback(null, response);\n  });\n};\n",
+        "config": {
+          "runtime": "nodejs8.10",
+          "handler": "list",
+          "timeout": 60,
+          "memory": 128,
+          "layers": []
+        },
+        "triggers": [
+          {
+            "resourceName": "apigusEast1listtodosget",
+            "config": {}
+          }
+        ],
+        "customSecurityPolicy": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem"
+              ],
+              "Resource": "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            }
+          ]
+        }
+      },
+      "299338ae-42e5-4ff1-bfb7-42b023f5c5aa": {
+        "id": "299338ae-42e5-4ff1-bfb7-42b023f5c5aa",
+        "parent": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+        "name": "todos/get.js",
+        "type": "JS_LAMBDA",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/todos/get.js",
+        "code": "'use strict';\n\nconst dynamodb = require('./dynamodb');\n\nmodule.exports.get = (event, context, callback) => {\n  const params = {\n    TableName: process.env.DYNAMODB_TABLE,\n    Key: {\n      id: event.pathParameters.id,\n    },\n  };\n\n  // fetch todo from the database\n  dynamodb.get(params, (error, result) => {\n    // handle potential errors\n    if (error) {\n      console.error(error);\n      callback(null, {\n        statusCode: error.statusCode || 501,\n        headers: { 'Content-Type': 'text/plain' },\n        body: 'Couldn\\'t fetch the todo item.',\n      });\n      return;\n    }\n\n    // create a response\n    const response = {\n      statusCode: 200,\n      body: JSON.stringify(result.Item),\n    };\n    callback(null, response);\n  });\n};\n",
+        "config": {
+          "runtime": "nodejs8.10",
+          "handler": "get",
+          "timeout": 60,
+          "memory": 128,
+          "layers": []
+        },
+        "triggers": [
+          {
+            "resourceName": "apigusEast1gettodosidget",
+            "config": {}
+          }
+        ],
+        "customSecurityPolicy": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem"
+              ],
+              "Resource": "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            }
+          ]
+        }
+      },
+      "f5fa261f-32b2-45af-b3a2-7524de34cf75": {
+        "id": "f5fa261f-32b2-45af-b3a2-7524de34cf75",
+        "parent": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+        "name": "todos/update.js",
+        "type": "JS_LAMBDA",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/todos/update.js",
+        "code": "'use strict';\n\nconst dynamodb = require('./dynamodb');\n\nmodule.exports.update = (event, context, callback) => {\n  const timestamp = new Date().getTime();\n  const data = JSON.parse(event.body);\n\n  // validation\n  if (typeof data.text !== 'string' || typeof data.checked !== 'boolean') {\n    console.error('Validation Failed');\n    callback(null, {\n      statusCode: 400,\n      headers: { 'Content-Type': 'text/plain' },\n      body: 'Couldn\\'t update the todo item.',\n    });\n    return;\n  }\n\n  const params = {\n    TableName: process.env.DYNAMODB_TABLE,\n    Key: {\n      id: event.pathParameters.id,\n    },\n    ExpressionAttributeNames: {\n      '#todo_text': 'text',\n    },\n    ExpressionAttributeValues: {\n      ':text': data.text,\n      ':checked': data.checked,\n      ':updatedAt': timestamp,\n    },\n    UpdateExpression: 'SET #todo_text = :text, checked = :checked, updatedAt = :updatedAt',\n    ReturnValues: 'ALL_NEW',\n  };\n\n  // update the todo in the database\n  dynamodb.update(params, (error, result) => {\n    // handle potential errors\n    if (error) {\n      console.error(error);\n      callback(null, {\n        statusCode: error.statusCode || 501,\n        headers: { 'Content-Type': 'text/plain' },\n        body: 'Couldn\\'t update the todo item.',\n      });\n      return;\n    }\n\n    // create a response\n    const response = {\n      statusCode: 200,\n      body: JSON.stringify(result.Attributes),\n    };\n    callback(null, response);\n  });\n};\n",
+        "config": {
+          "runtime": "nodejs8.10",
+          "handler": "update",
+          "timeout": 60,
+          "memory": 128,
+          "layers": []
+        },
+        "triggers": [
+          {
+            "resourceName": "apigusEast1updatetodosidput",
+            "config": {}
+          }
+        ],
+        "customSecurityPolicy": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem"
+              ],
+              "Resource": "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            }
+          ]
+        }
+      },
+      "2ec1a812-f1a1-465e-aabe-26df73739c67": {
+        "id": "2ec1a812-f1a1-465e-aabe-26df73739c67",
+        "parent": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+        "name": "todos/delete.js",
+        "type": "JS_LAMBDA",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/todos/delete.js",
+        "code": "'use strict';\n\nconst dynamodb = require('./dynamodb');\n\nmodule.exports.delete = (event, context, callback) => {\n  const params = {\n    TableName: process.env.DYNAMODB_TABLE,\n    Key: {\n      id: event.pathParameters.id,\n    },\n  };\n\n  // delete the todo from the database\n  dynamodb.delete(params, (error) => {\n    // handle potential errors\n    if (error) {\n      console.error(error);\n      callback(null, {\n        statusCode: error.statusCode || 501,\n        headers: { 'Content-Type': 'text/plain' },\n        body: 'Couldn\\'t remove the todo item.',\n      });\n      return;\n    }\n\n    // create a response\n    const response = {\n      statusCode: 200,\n      body: JSON.stringify({}),\n    };\n    callback(null, response);\n  });\n};\n",
+        "config": {
+          "runtime": "nodejs8.10",
+          "handler": "delete",
+          "timeout": 60,
+          "memory": 128,
+          "layers": []
+        },
+        "triggers": [
+          {
+            "resourceName": "apigusEast1deletetodosiddelete",
+            "config": {}
+          }
+        ],
+        "customSecurityPolicy": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem"
+              ],
+              "Resource": "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            }
+          ]
+        }
+      },
+      "3f54d3f0-7330-4f20-abd3-54c4f092a3ad": {
+        "id": "3f54d3f0-7330-4f20-abd3-54c4f092a3ad",
+        "parent": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+        "name": "offline",
+        "type": "DIRECTORY",
+        "isDirectory": true,
+        "children": [
+          "60750d30-5ad7-4586-b868-1abf9355ca73"
+        ],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/offline"
+      },
+      "749cf815-a11e-4fd6-a978-59c662893dfb": {
+        "id": "749cf815-a11e-4fd6-a978-59c662893dfb",
+        "parent": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+        "name": "todos",
+        "type": "DIRECTORY",
+        "isDirectory": true,
+        "children": [
+          "6aa5d485-d87f-4573-a9f5-8c74b9b33e6e"
+        ],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/todos"
+      },
+      "7a215168-dc25-4f74-8160-09ded42c75a2": {
+        "id": "7a215168-dc25-4f74-8160-09ded42c75a2",
+        "parent": null,
+        "name": "serverless.yml",
+        "type": "YAML_FILE",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "serverless.yml",
+        "code": "service: serverless-rest-api-with-dynamodb\n\nframeworkVersion: \">=1.1.0 <2.0.0\"\n\nplugins:\n  - serverless-dynamodb-local\n  - serverless-offline\n\ncustom:\n  dynamodb:\n    start:\n      port: 8000\n      inMemory: true\n      migrate: true\n    migration:\n      dir: offline/migrations\n\nprovider:\n  name: aws\n  runtime: nodejs8.10\n  environment:\n    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}\n  iamRoleStatements:\n    - Effect: Allow\n      Action:\n        - dynamodb:Query\n        - dynamodb:Scan\n        - dynamodb:GetItem\n        - dynamodb:PutItem\n        - dynamodb:UpdateItem\n        - dynamodb:DeleteItem\n      Resource: \"arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}\"\n\nfunctions:\n  create:\n    handler: todos/create.create\n    events:\n      - http:\n          path: todos\n          method: post\n          cors: true\n\n  list:\n    handler: todos/list.list\n    events:\n      - http:\n          path: todos\n          method: get\n          cors: true\n\n  get:\n    handler: todos/get.get\n    events:\n      - http:\n          path: todos/{id}\n          method: get\n          cors: true\n\n  update:\n    handler: todos/update.update\n    events:\n      - http:\n          path: todos/{id}\n          method: put\n          cors: true\n\n  delete:\n    handler: todos/delete.delete\n    events:\n      - http:\n          path: todos/{id}\n          method: delete\n          cors: true\n\nresources:\n  Resources:\n    TodosDynamoDbTable:\n      Type: 'AWS::DynamoDB::Table'\n      DeletionPolicy: Retain\n      Properties:\n        AttributeDefinitions:\n          -\n            AttributeName: id\n            AttributeType: S\n        KeySchema:\n          -\n            AttributeName: id\n            KeyType: HASH\n        ProvisionedThroughput:\n          ReadCapacityUnits: 1\n          WriteCapacityUnits: 1\n        TableName: ${self:provider.environment.DYNAMODB_TABLE}\n"
+      },
+      "b4779bd8-9e02-4272-aa22-66eafb17817f": {
+        "id": "b4779bd8-9e02-4272-aa22-66eafb17817f",
+        "parent": null,
+        "name": "README.md",
+        "type": "MARKDOWN_FILE",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "README.md",
+        "code": "<!--\ntitle: 'AWS Serverless REST API with DynamoDB and offline support example in NodeJS'\ndescription: 'This example demonstrates how to run a service locally, using the ''serverless-offline'' plugin. It provides a REST API to manage Todos stored in DynamoDB.'\nlayout: Doc\nframework: v1\nplatform: AWS\nlanguage: nodeJS\nauthorLink: 'https://github.com/adambrgmn'\nauthorName: 'Adam Bergman'\nauthorAvatar: 'https://avatars1.githubusercontent.com/u/13746650?v=4&s=140'\n-->\n# Serverless REST API with DynamoDB and offline support\n\nThis example demonstrates how to run a service locally, using the\n[serverless-offline](https://github.com/dherault/serverless-offline) plugin. It\nprovides a REST API to manage Todos stored in a DynamoDB, similar to the\n[aws-node-rest-api-with-dynamodb](https://github.com/serverless/examples/tree/master/aws-node-rest-api-with-dynamodb)\nexample. A local DynamoDB instance is provided by the\n[serverless-dynamodb-local](https://github.com/99xt/serverless-dynamodb-local)\nplugin.\n\n## Use-case\n\nTest your service locally, without having to deploy it first.\n\n## Setup\n\n```bash\nnpm install\nserverless dynamodb install\nserverless offline start\nserverless dynamodb migrate (this imports schema)\n```\n\n## Run service offline\n\n```bash\nserverless offline start\n```\n\n## Usage\n\nYou can create, retrieve, update, or delete todos with the following commands:\n\n### Create a Todo\n\n```bash\ncurl -X POST -H \"Content-Type:application/json\" http://localhost:3000/todos --data '{ \"text\": \"Learn Serverless\" }'\n```\n\nExample Result:\n```bash\n{\"text\":\"Learn Serverless\",\"id\":\"ee6490d0-aa11e6-9ede-afdfa051af86\",\"createdAt\":1479138570824,\"checked\":false,\"updatedAt\":1479138570824}%\n```\n\n### List all Todos\n\n```bash\ncurl -H \"Content-Type:application/json\" http://localhost:3000/todos\n```\n\nExample output:\n```bash\n[{\"text\":\"Deploy my first service\",\"id\":\"ac90feaa11e6-9ede-afdfa051af86\",\"checked\":true,\"updatedAt\":1479139961304},{\"text\":\"Learn Serverless\",\"id\":\"206793aa11e6-9ede-afdfa051af86\",\"createdAt\":1479139943241,\"checked\":false,\"updatedAt\":1479139943241}]%\n```\n\n### Get one Todo\n\n```bash\n# Replace the <id> part with a real id from your todos table\ncurl -H \"Content-Type:application/json\" http://localhost:3000/todos/<id>\n```\n\nExample Result:\n```bash\n{\"text\":\"Learn Serverless\",\"id\":\"ee6490d0-aa11e6-9ede-afdfa051af86\",\"createdAt\":1479138570824,\"checked\":false,\"updatedAt\":1479138570824}%\n```\n\n### Update a Todo\n\n```bash\n# Replace the <id> part with a real id from your todos table\ncurl -X PUT -H \"Content-Type:application/json\" http://localhost:3000/todos/<id> --data '{ \"text\": \"Learn Serverless\", \"checked\": true }'\n```\n\nExample Result:\n```bash\n{\"text\":\"Learn Serverless\",\"id\":\"ee6490d0-aa11e6-9ede-afdfa051af86\",\"createdAt\":1479138570824,\"checked\":true,\"updatedAt\":1479138570824}%\n```\n\n### Delete a Todo\n\n```bash\n# Replace the <id> part with a real id from your todos table\ncurl -X DELETE -H \"Content-Type:application/json\" http://localhost:3000/todos/<id>\n```\n\nNo output\n"
+      },
+      "4489d566-33ef-4c07-b6d7-650dc874b87c": {
+        "id": "4489d566-33ef-4c07-b6d7-650dc874b87c",
+        "parent": null,
+        "name": ".gitignore",
+        "type": "TEXT_FILE",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": ".gitignore",
+        "code": ".serverless\nnode_modules\n"
+      },
+      "d09b27fc-05bc-4ad1-be84-a398f4a53d6c": {
+        "id": "d09b27fc-05bc-4ad1-be84-a398f4a53d6c",
+        "parent": null,
+        "name": "package.json",
+        "type": "JSON_FILE",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "package.json",
+        "code": "{\n  \"name\": \"aws-rest-api-offline\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Serverless REST API with DynamoDB and offline support\",\n  \"repository\": \"\",\n  \"author\": \"Christoph Gysin <christoph.gysin@gmail.com>\",\n  \"license\": \"MIT\",\n  \"dependencies\": {\n    \"uuid\": \"^2.0.3\"\n  },\n  \"devDependencies\": {\n    \"aws-sdk\": \"^2.12.0\",\n    \"serverless-dynamodb-local\": \"^0.2.18\",\n    \"serverless-offline\": \"^3.8.3\"\n  }\n}\n"
+      },
+      "60750d30-5ad7-4586-b868-1abf9355ca73": {
+        "id": "60750d30-5ad7-4586-b868-1abf9355ca73",
+        "parent": "3f54d3f0-7330-4f20-abd3-54c4f092a3ad",
+        "name": "migrations",
+        "type": "DIRECTORY",
+        "isDirectory": true,
+        "children": [
+          "7d58aa90-1de5-4047-82ec-3af18ecaaffb"
+        ],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/offline/migrations"
+      },
+      "6aa5d485-d87f-4573-a9f5-8c74b9b33e6e": {
+        "id": "6aa5d485-d87f-4573-a9f5-8c74b9b33e6e",
+        "parent": "749cf815-a11e-4fd6-a978-59c662893dfb",
+        "name": "dynamodb.js",
+        "type": "JS_FILE",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/todos/dynamodb.js",
+        "code": "'use strict';\n\nconst AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies\n\nlet options = {};\n\n// connect to local DB if running offline\nif (process.env.IS_OFFLINE) {\n  options = {\n    region: 'localhost',\n    endpoint: 'http://localhost:8000',\n  };\n}\n\nconst client = new AWS.DynamoDB.DocumentClient(options);\n\nmodule.exports = client;\n"
+      },
+      "7d58aa90-1de5-4047-82ec-3af18ecaaffb": {
+        "id": "7d58aa90-1de5-4047-82ec-3af18ecaaffb",
+        "parent": "60750d30-5ad7-4586-b868-1abf9355ca73",
+        "name": "todos.json",
+        "type": "JSON_FILE",
+        "isDirectory": false,
+        "children": [],
+        "isRemovable": true,
+        "filePath": "serverless-rest-api-with-dynamodb/offline/migrations/todos.json",
+        "code": "{\n    \"Table\": {\n        \"TableName\": \"serverless-rest-api-with-dynamodb-dev\",\n        \"KeySchema\": [\n            {\n                \"AttributeName\": \"id\",\n                \"KeyType\": \"HASH\"\n            }\n        ],\n        \"AttributeDefinitions\": [\n            {\n                \"AttributeName\": \"id\",\n                \"AttributeType\": \"S\"\n            }\n        ],\n        \"ProvisionedThroughput\": {\n            \"ReadCapacityUnits\": 1,\n            \"WriteCapacityUnits\": 1\n        }\n    }\n}\n"
+      }
+    },
+    "deletedFiles": [],
+    "rootNode": "7bcaec12-c805-4fe1-8d83-93d757baf9e9",
+    "openFiles": [
+      "5debff04-9510-440d-a445-e34a6c264a35",
+      "d09b27fc-05bc-4ad1-be84-a398f4a53d6c"
+    ],
+    "currentFileId": "5debff04-9510-440d-a445-e34a6c264a35",
+    "resources": {
+      "apigusEast1createtodospost": {
+        "type": "API_GATEWAY",
+        "name": "apigusEast1createtodospost",
+        "config": {
+          "selectedRegion": "us-east-1",
+          "apiName": "create",
+          "apiMode": 0,
+          "endpointType": "EDGE",
+          "resourceName": "todos",
+          "resourcePath": "/todos",
+          "resourceMode": 0,
+          "restMethod": "POST",
+          "proxyIntegration": true,
+          "enableCORS": true,
+          "stageMode": 0,
+          "stageName": "dev"
+        }
+      },
+      "apigusEast1listtodosget": {
+        "type": "API_GATEWAY",
+        "name": "apigusEast1listtodosget",
+        "config": {
+          "selectedRegion": "us-east-1",
+          "apiName": "list",
+          "apiMode": 0,
+          "endpointType": "EDGE",
+          "resourceName": "todos",
+          "resourcePath": "/todos",
+          "resourceMode": 0,
+          "restMethod": "GET",
+          "proxyIntegration": true,
+          "enableCORS": true,
+          "stageMode": 0,
+          "stageName": "dev"
+        }
+      },
+      "apigusEast1gettodosidget": {
+        "type": "API_GATEWAY",
+        "name": "apigusEast1gettodosidget",
+        "config": {
+          "selectedRegion": "us-east-1",
+          "apiName": "get",
+          "apiMode": 0,
+          "endpointType": "EDGE",
+          "resourceName": "todos/{id}",
+          "resourcePath": "/todos/{id}",
+          "resourceMode": 0,
+          "restMethod": "GET",
+          "proxyIntegration": true,
+          "enableCORS": true,
+          "stageMode": 0,
+          "stageName": "dev"
+        }
+      },
+      "apigusEast1updatetodosidput": {
+        "type": "API_GATEWAY",
+        "name": "apigusEast1updatetodosidput",
+        "config": {
+          "selectedRegion": "us-east-1",
+          "apiName": "update",
+          "apiMode": 0,
+          "endpointType": "EDGE",
+          "resourceName": "todos/{id}",
+          "resourcePath": "/todos/{id}",
+          "resourceMode": 0,
+          "restMethod": "PUT",
+          "proxyIntegration": true,
+          "enableCORS": true,
+          "stageMode": 0,
+          "stageName": "dev"
+        }
+      },
+      "apigusEast1deletetodosiddelete": {
+        "type": "API_GATEWAY",
+        "name": "apigusEast1deletetodosiddelete",
+        "config": {
+          "selectedRegion": "us-east-1",
+          "apiName": "delete",
+          "apiMode": 0,
+          "endpointType": "EDGE",
+          "resourceName": "todos/{id}",
+          "resourcePath": "/todos/{id}",
+          "resourceMode": 0,
+          "restMethod": "DELETE",
+          "proxyIntegration": true,
+          "enableCORS": true,
+          "stageMode": 0,
+          "stageName": "dev"
+        }
+      }
+    },
+    "customTemplate": {
+      "dialect": "CloudFormation",
+      "definitions": {
+        "Resources": {
+          "TodosDynamoDbTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "id",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "id",
+                  "KeyType": "HASH"
+                }
+              ],
+              "ProvisionedThroughput": {
+                "ReadCapacityUnits": 1,
+                "WriteCapacityUnits": 1
+              },
+              "TableName": "serverless-rest-api-with-dynamodb-self:provider.stage"
+            }
+          }
+        }
+      }
+    },
+    "envVariables": [
+      {
+        "lambdaId": "all",
+        "varKey": "DYNAMODB_TABLE",
+        "varValue": "serverless-rest-api-with-dynamodb-self:provider.stage",
+        "shouldPersist": true,
+        "displayOnly": false,
+        "editable": true
+      },
+      {
+        "lambdaId": "all",
+        "varKey": "SIGMA_AWS_ACC_ID",
+        "varValue": null,
+        "shouldPersist": false,
+        "displayOnly": false,
+        "editable": false
+      }
+    ],
+    "packageJSON": {
+      "dependencies": {
+        "uuid": {
+          "name": "uuid",
+          "language": "javascript",
+          "version": "^2.0.3"
+        },
+        "aws-sdk": {
+          "name": "aws-sdk",
+          "language": "javascript",
+          "version": "^2.12.0",
+          "dev": true
+        },
+        "serverless-dynamodb-local": {
+          "name": "serverless-dynamodb-local",
+          "language": "javascript",
+          "version": "^0.2.18",
+          "dev": true
+        },
+        "serverless-offline": {
+          "name": "serverless-offline",
+          "language": "javascript",
+          "version": "^3.8.3",
+          "dev": true
+        }
+      }
+    }
+  },
+  "PROJECT_META": {
+    "projectName": "aws-rest-api-offline",
+    "projectDescription": "Serverless REST API with DynamoDB and offline support",
+    "projectVersion": "1.0.0",
+    "projectRegion": "us-east-1",
+    "platform": "AWS",
+    "platformRegions": {},
+    "lastSave": 1554452628596
+  },
+  "VCS_STATE": {
+    "provider": "GitHub",
+    "repo": {
+      "name": "examples",
+      "url": "https://github.com/Kumudikatest/serverless2"
+    }
+  }
+}
